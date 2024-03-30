@@ -2,22 +2,43 @@ import os
 from flask import Flask, request, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 from fastai.imports import *
-from fastai.transforms import *
-from fastai.conv_learner import *
-from fastai.model import *
-from fastai.dataset import *
-from fastai.sgdr import *
-from fastai.plots import *
-import glob
-import imghdr
+from fastai.vision.all import *
+from fastai.vision.models import resnet101
 
-UPLOAD_FOLDER = '../../data/food-101/test/'
+from fastai.metrics import accuracy  # Import accuracy metric
+from fastai.vision.learner import cnn_learner
+from fastai.vision.models import *
+from fastai.data import *
+from fastai.callback.schedule import *
+from fastai.vision import *
+
+
+from PIL import Image
+import pandas as pd
+import numpy as np
+
+
+import glob
+import json
+
+UPLOAD_FOLDER = 'uploads/'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 # Model stuff
-PATH = "../../data/food-101/"
-sz=224
-arch=resnext101
+PATH = "data/food-101/"
+# Add these debug statements at the beginning of your Flask application
+
+# Print the current working directory
+print("Current working directory:", os.getcwd())
+
+# Construct and print the absolute path for the data directory
+data_dir = os.path.abspath("data/food-101/")
+print("Absolute path for data directory:", data_dir)
+
+# Now let's use this absolute path for the PATH variable
+PATH = data_dir
+sz = 224
+arch = resnet101
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -29,61 +50,86 @@ def allowed_file(filename):
 
 @app.route("/path", methods=["POST"])
 def predict():
-    filepath = request.data.decode("utf-8").split("=")[1]
+    json_str = request.data.decode("utf-8")
+    data = json.loads(json_str)
+    filepath = data["filepath"]
 
-    # cleaning test dir
-    files = glob.glob(UPLOAD_FOLDER+'*')
-    for f in files:
-        os.remove(f)
+    # Load the image
+    img = PILImage.create(filepath)
+
+    # Convert image to tensor
+    img_tensor = tensor(Image.open(filepath)).float()/255
     
-    ext = imghdr.what(filepath)
-    os.rename(filepath, os.path.join(app.config['UPLOAD_FOLDER'], "batata." + ext))
+    # Define transformations
+    tfms = aug_transforms(size=224, max_rotate=0, min_scale=1.0, max_zoom=1.0)
 
-    data = ImageClassifierData.from_paths(PATH, tfms=tfms_from_model(arch, sz), test_name='test')
-    learn = ConvLearner.pretrained(arch, data, precompute=True, xtra_fc=[512, 512], ps=0.5)
-    learn.load('better_model')
-    learn.precompute=False # We'll pass in a raw image, not activations
-    preds = learn.predict(is_test=True)
-    top_preds = preds[0].argsort()[-5:][::-1] # get top 5 predictions
-    top_pred_names = [data.classes[i] for i in top_preds]
+    # Apply transformations to the tensor
+    # img = Pipeline(tfms)(img_tensor)
 
+    # Create a learner if not already created (ideally, this should be done outside the route function)
+    if 'learn' not in globals():
+        # Define paths for training and testing subsets
+        train_path = "data/food-101/meta/train.csv"
+        test_path = "data/food-101/meta/test.csv"
+        # Load metadata
+        train_metadata = pd.read_csv(train_path)
+        test_metadata = pd.read_csv(test_path)
+        print(train_metadata)
+
+        # Define transformations
+        item_tfms = Resize(224)
+        batch_tfms = tfms
+
+        # Create DataLoaders using from_df
+        train_dls = ImageDataLoaders.from_df(train_metadata+".jpg", path="data/food-101/images", item_tfms=item_tfms, batch_tfms=batch_tfms)
+        test_dls = ImageDataLoaders.from_df(test_metadata+".jpg", path="data/food-101/images", item_tfms=item_tfms, batch_tfms=batch_tfms)
+
+        # Define architecture
+        arch = resnet34
+
+        # Create a learner for training
+        learn = cnn_learner(train_dls, arch, pretrained=True, metrics=accuracy)
+
+    # Get predictions
+    pred_class, pred_idx, outputs = learn.predict(img)
+
+    # Get top predictions
+    top_idxs = outputs.argsort(descending=True)[:5]
+    top_pred_names = [learn.dls.vocab[i] for i in top_idxs]
+
+    # Return predictions
     return jsonify(predictions=top_pred_names)
-    
+
+
 @app.route("/", methods=['GET', 'POST'])
 def upload_file():
     if request.method == 'POST':
-        # check if the post request has the file part
         if 'file' not in request.files:
-            print(request)
-            print(request.files)
             flash('No file part')
             return redirect(request.url)
         file = request.files['file']
-        # if user does not select file, browser also
-        # submit a empty part without filename
         if file.filename == '':
             flash('No selected file')
             return redirect(request.url)
         if file and allowed_file(file.filename):
-            # cleaning test dir
             files = glob.glob(UPLOAD_FOLDER+'*')
             for f in files:
                 os.remove(f)
             
             filename = secure_filename(file.filename)
+            print("Uploaded filename:", filename)  # Print the filename
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            print("Uploaded filepath:", filepath)  # Print the filename
+            # Ensure the UPLOAD_FOLDER directory exists
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
             file.save(filepath)
             
-            
-            data = ImageClassifierData.from_paths(PATH, tfms=tfms_from_model(arch, sz), test_name='test')
-            learn = ConvLearner.pretrained(arch, data, precompute=True, xtra_fc=[512, 512], ps=0.5)
-            learn.load('better_model')
-            learn.precompute=False # We'll pass in a raw image, not activations
-            preds = learn.predict(is_test=True)
-            top_preds = preds[0].argsort()[-5:][::-1] # get top 5 predictions
-            top_pred_names = [data.classes[i] for i in top_preds]
-            
-            return jsonify(predictions=top_pred_names)
+            learn = load_learner(PATH)
+            img = PILImage.create(filepath)
+            pred_class, pred_idx, outputs = learn.predict(img)
+
+            return jsonify(predictions=str(pred_class))
 
     return '''
         <!doctype html>

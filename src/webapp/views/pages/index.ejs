@@ -1,3 +1,4 @@
+
 <!doctype html>
 <!--
   Material Design Lite
@@ -35,7 +36,7 @@
     <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
     <meta name="msapplication-TileColor" content="#3372DF">
 
-    <link rel="shortcut icon" href="images/favicon.png">
+    <!-- <link rel="shortcut icon" href="images/favicon.png"> -->
 
     <!-- SEO: If your mobile URL is different from the desktop URL, add a canonical link to the desktop page https://developers.google.com/webmasters/smartphone-sites/feature-phones -->
     <!--
@@ -58,7 +59,7 @@
     }
     </style>
     
-      <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+      <!-- <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.5.1/fingerprint2.min.js"></script>
       <script>
           // Initialize Firebase
@@ -71,13 +72,43 @@
               messagingSenderId: "16846359714"
           };
           firebase.initializeApp(config);
-      </script>
-    <script src="public/js/ejs.js"></script>
+      </script> -->
+<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/1.5.1/fingerprint2.min.js"></script>
+ <!-- <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-admin.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js"></script>  -->
+<script src="public/js/ejs.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="/public/js/update.js"></script>
-    <script>
-        // Global device id
+
+<script >
+  // Import the functions you need from the SDKs you need
+ 
+ // import {firebase} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCJSwZU5sdnSH8Rn_Rd9yqOQnsfU32s6TE",
+    authDomain: "snapfit-e0188.firebaseapp.com",
+    databaseURL: "https://snapfit-e0188-default-rtdb.firebaseio.com",
+    projectId: "snapfit-e0188",
+    storageBucket: "snapfit-e0188.appspot.com",
+    messagingSenderId: "702888571327",
+    appId: "1:702888571327:web:1bed4f8e36c2e2b3eaf10a",
+    measurementId: "G-CJ65M7YWVS"
+  };
+
+  // Initialize Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  // const analytics = getAnalytics(app);
+   // Global device id
         var deviceId;
         new Fingerprint2().get(function(result, components){
             deviceId = result; //a hash, representing your device fingerprint
@@ -97,9 +128,8 @@
                 }
             });
         });
+</script>
 
-        
-    </script>
 
   </head>
   <body>
@@ -112,7 +142,7 @@
       
       <div class="demo-drawer mdl-layout__drawer mdl-color--blue-grey-900 mdl-color-text--blue-grey-50">
         <header class="demo-drawer-header">
-          <img src="images/user.jpg" class="demo-avatar">
+          <!-- <img src="images/user.jpg" class="demo-avatar"> -->
           <div class="demo-avatar-dropdown">
             <span>hello@example.com</span>
             <div class="mdl-layout-spacer"></div>
@@ -144,9 +174,8 @@
       </div>
 
       <main class="mdl-layout__content mdl-color--grey-100">
-        
-
-          <% include ../partials/bar_chart %>
+      
+           <%- include ("../partials/bar_chart") %> 
           
           <div id="suggestions-list" class="demo-cards mdl-cell mdl-cell--12-col mdl-cell--8-col-tablet mdl-grid">
               <script src="public/js/suggestions_load.js"></script>
@@ -167,18 +196,18 @@
               }
             }
           </style>
-          <button id="t_button" type="submit" class="mdl-button mdl-js-buttons mdl-button--fab mdl-button--colored mdl-js-ripple-effect">
+          <button id="t_button" type="button" class="mdl-button mdl-js-buttons mdl-button--fab mdl-button--colored mdl-js-ripple-effect">
               <i class="material-icons" style="z-index: 1;">add</i>
           </button>
           
          <div style="opacity: 0; filter:alpha(opacity=0);" class="mdl-button mdl-js-buttons mdl-button--fab mdl-button--colored mdl-js-ripple-effect">
-            <form style="opacity: 0; filter:alpha(opacity=0);" id="submit-form" enctype="multipart/form-data" action="http://ec2-54-196-151-65.compute-1.amazonaws.com:5000" method="post">
+            <form style="opacity: 0; filter:alpha(opacity=0);" id="submit-form" enctype="multipart/form-data" action="http://localhost:8080/submit-image" method="post">
                <input onchange="readURL(this);" style="height: 50px; opacity: 0; filter:alpha(opacity=0);" type="file" name="file" accept="image/*" id="file" size='1000'>
             </form>
           </div>
           
           
-          <dialog class="mdl-dialog">
+          <dialog id="select-options-dialog" class="mdl-dialog" >
             <h4 class="mdl-dialog__title">Select the best fit!</h4>
             
             <div class="mdl-dialog__content">
@@ -213,8 +242,8 @@
 
                 <div style="margin-top: 30px">
                   <tr>
-                    <button type="button" class="mdl-button submit">Submit</button>
-                    <button type="button" class="mdl-button close">Cancel</button>
+                    <button id="submit-option" type="button" class="mdl-button submit">Submit</button>
+                    <button id="cancel-option" type="button" class="mdl-button close">Cancel</button>
                   </tr> 
                 </div>            
             </div>
@@ -236,9 +265,12 @@
           var dialog = document.querySelector('dialog');
              
           dialog.querySelector('.submit').addEventListener('click', function() {
+            console.log("Inside click event lisetner");
              if($('#option1').is(':checked')) { product_name = $('#label_top1').text(); }
              if($('#option2').is(':checked')) { product_name = $('#label_top2').text(); }
              if($('#option3').is(':checked')) { product_name = $('#label_top3').text(); }
+             console.log(product_name);
+             product_name = product_name.replace("_", " ")
              console.log(product_name);
              updateNutritionalValues(product_name);
              dialog.close();
@@ -252,8 +284,9 @@
           fileInput = document.getElementById('file');
 
           fileInput.addEventListener('change', function(e) {
+            console.log("Inside change event lisetner");
             form = document.getElementById('submit-form');
-            var url = "http://ec2-54-196-151-65.compute-1.amazonaws.com:8080/submit-image"
+            var url = "http://localhost:8080/submit-image"
 
             $.ajax({
                 type: "POST",
@@ -261,13 +294,14 @@
                 data: new FormData($('#submit-form')[0]), // serializes the form's elements.
                 processData: false,
                 contentType: false,
+                dataType: 'json', // Specify the expected data type as JSON
                 success: function(data)
                 {
-                    data = JSON.parse(data)
+                    // data = JSON.parse(data)
                     console.log(data['predictions']); // show response from the php script.
-                    $('#label_top1').text(data['predictions'][0]);
-                    $('#label_top2').text(data['predictions'][1]);
-                    $('#label_top3').text(data['predictions'][2]);      
+                    $('#label_top1').text(data['predictions'][0].replace('.jpg', ''));
+                    $('#label_top2').text(data['predictions'][1].replace('.jpg', ''));
+                    $('#label_top3').text(data['predictions'][2].replace('.jpg', ''));      
                     
                     var preview = document.querySelector('#submitted_img');
                     var file    = document.querySelector('input[type=file]').files[0];
@@ -336,5 +370,39 @@
           </g>
         </defs>
       </svg>
+      <script>
+  // Your JavaScript code goes here
+  $(document).ready(function () {
+    // Trigger file input click on button click
+    $('#t_button').click(function () {
+      $('#file').click();
+    });
+
+    // Handle file input change event
+    $('#file').change(function () {
+      // Implement file upload logic here
+      // Show the dialog afterwards
+      $('#select-options-dialog').get(0).showModal();
+    });
+
+    // Handle submit option click
+    $('#submit-option').click(function () {
+      // Implement logic to handle option submission
+      if($('#option1').is(':checked')) { product_name = $('#label_top1').text(); }
+             if($('#option2').is(':checked')) { product_name = $('#label_top2').text(); }
+             if($('#option3').is(':checked')) { product_name = $('#label_top3').text(); }
+             console.log(product_name);
+             updateNutritionalValues(product_name);
+      // Close the dialog afterwards
+      $('#select-options-dialog').get(0).close();
+    });
+
+    // Handle cancel option click
+    $('#cancel-option').click(function () {
+      // Close the dialog
+      $('#select-options-dialog').get(0).close();
+    });
+  });
+</script>
   </body>
 </html>

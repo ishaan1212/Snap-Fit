@@ -1,7 +1,7 @@
 function updateNutritionalValues(product_name) {
     
     var propertiesObject = { product_name:product_name};
-    $.get('/description', propertiesObject, function (data) {
+    $.get('/descriptor', propertiesObject, function (data) {
         var database = firebase.database();
         
         var portion_multiplier = 2;
